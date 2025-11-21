@@ -330,8 +330,17 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
     <script>
       import { createClient } from '@supabase/supabase-js';
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      console.log('Env check:', {
+        hasPublicUrl: !!import.meta.env.PUBLIC_SUPABASE_URL,
+        hasViteUrl: !!import.meta.env.VITE_SUPABASE_URL,
+        hasPublicKey: !!import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+        hasViteKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+        finalUrl: supabaseUrl,
+        finalKey: supabaseAnonKey ? 'present' : 'missing'
+      });
 
       if (!supabaseUrl || !supabaseAnonKey) {
         document.getElementById('main-content').innerHTML = '<div class="empty-state">Configuration Error: Missing Supabase credentials</div>';
