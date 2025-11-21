@@ -7,7 +7,8 @@ export async function parseMarkdown(content: string): Promise<string> {
       gfm: true,
     });
 
-    return marked.parse(content);
+    const result = await marked.parse(content);
+    return result;
   } catch (error) {
     console.error('Error parsing markdown:', error);
     return content.replace(/\n/g, '<br>');
