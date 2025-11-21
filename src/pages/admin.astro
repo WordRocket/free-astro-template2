@@ -327,10 +327,26 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
       </main>
     </div>
 
-    <script type=module>
-      import { initAdmin } from '../lib/admin-client';
+    <script type="module">
+      console.log('Admin script loading...');
 
-      initAdmin();
+      try {
+        const { initAdmin } = await import('../lib/admin-client.ts');
+        console.log('Module imported successfully');
+        initAdmin();
+      } catch (error) {
+        console.error('Failed to load admin module:', error);
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+          mainContent.innerHTML = `
+            <div style="padding: 40px; text-align: center;">
+              <h2 style="color: #dc3545; margin-bottom: 20px;">Error Loading Admin Panel</h2>
+              <p style="color: #6c757d; margin-bottom: 10px;">${error.message}</p>
+              <pre style="background: #f8f9fa; padding: 20px; border-radius: 6px; text-align: left; overflow: auto;">${error.stack}</pre>
+            </div>
+          `;
+        }
+      }
     </script>
   </body>
 </html>
