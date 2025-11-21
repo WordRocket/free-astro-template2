@@ -2,7 +2,7 @@
 title: 'Example Post Two'
 description: 'Sample article demonstrating tags, categories, and reading time.'
 pubDate: 'Aug 14 2025'
-heroImage: '../../assets/images/example-blog-hero2.jpg'
+heroImage: ''
 category: 'Showcase'
 tags: ['astro', 'ui']
 ---

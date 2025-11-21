@@ -1,0 +1,1127 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`Admin Panel - ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: #f8f9fa;
+        color: #212529;
+      }
+
+      .admin-container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        width: 250px;
+        background: #2c3e50;
+        color: white;
+        padding: 20px;
+      }
+
+      .sidebar-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+
+      .nav-item {
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .nav-item:hover {
+        background: rgba(255,255,255,0.1);
+      }
+
+      .nav-item.active {
+        background: #3498db;
+      }
+
+      .main-content {
+        flex: 1;
+        padding: 30px;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+
+      .page-title {
+        font-size: 32px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: #3498db;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #2980b9;
+      }
+
+      .btn-danger {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #c0392b;
+      }
+
+      .btn-secondary {
+        background: #95a5a6;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #7f8c8d;
+      }
+
+      .card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+      }
+
+      .table-container {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+      }
+
+      tr:hover {
+        background: #f8f9fa;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #495057;
+      }
+
+      .form-input, .form-textarea, .form-select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+      }
+
+      .form-textarea {
+        min-height: 200px;
+        resize: vertical;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      }
+
+      .form-input:focus, .form-textarea:focus, .form-select:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .badge-success {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .badge-warning {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 8px;
+      }
+
+      .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+      }
+
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+
+      .success {
+        background: #d4edda;
+        color: #155724;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .markdown-preview {
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 20px;
+        margin-top: 10px;
+        background: white;
+        min-height: 200px;
+      }
+
+      .split-view {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .checkbox-group input[type="checkbox"] {
+        width: auto;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-container">
+      <aside class="sidebar">
+        <div class="sidebar-title">CMS Admin</div>
+        <nav>
+          <div class="nav-item active" data-page="posts">Posts</div>
+          <div class="nav-item" data-page="authors">Authors</div>
+          <div class="nav-item" data-page="categories">Categories</div>
+          <div class="nav-item" data-page="tags">Tags</div>
+        </nav>
+      </aside>
+      <main class="main-content" id="main-content">
+        <div class="loading">Loading...</div>
+      </main>
+    </div>
+
+    <script>
+      import { supabase } from '../lib/supabase.ts';
+
+      let currentView = 'posts';
+      let editingId = null;
+
+      function slugify(text) {
+        return text
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/--+/g, '-')
+          .trim();
+      }
+
+      function formatDate(dateString) {
+        if (!dateString) return 'Never';
+        return new Date(dateString).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+
+      async function loadPosts() {
+        const { data: posts, error } = await supabase
+          .from('posts')
+          .select(`
+            *,
+            author:authors(name),
+            category:categories(name)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          showError('Failed to load posts: ' + error.message);
+          return;
+        }
+
+        const content = `
+          <div class="page-header">
+            <h1 class="page-title">Posts</h1>
+            <button class="btn btn-primary" onclick="window.showPostForm()">New Post</button>
+          </div>
+          <div class="card">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Published</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${posts.map(post => `
+                    <tr>
+                      <td>${post.title}</td>
+                      <td>${post.author?.name || 'No author'}</td>
+                      <td>${post.category?.name || 'Uncategorized'}</td>
+                      <td>
+                        <span class="badge ${post.published ? 'badge-success' : 'badge-warning'}">
+                          ${post.published ? 'Published' : 'Draft'}
+                        </span>
+                      </td>
+                      <td>${formatDate(post.published_at)}</td>
+                      <td>
+                        <div class="action-buttons">
+                          <button class="btn btn-secondary btn-small" onclick="window.editPost('${post.id}')">Edit</button>
+                          <button class="btn btn-danger btn-small" onclick="window.deletePost('${post.id}', '${post.title.replace(/'/g, "\\'")}')">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('main-content').innerHTML = content;
+      }
+
+      async function loadAuthors() {
+        const { data: authors, error } = await supabase
+          .from('authors')
+          .select('*')
+          .order('name');
+
+        if (error) {
+          showError('Failed to load authors: ' + error.message);
+          return;
+        }
+
+        const content = `
+          <div class="page-header">
+            <h1 class="page-title">Authors</h1>
+            <button class="btn btn-primary" onclick="window.showAuthorForm()">New Author</button>
+          </div>
+          <div class="card">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Slug</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${authors.map(author => `
+                    <tr>
+                      <td>${author.name}</td>
+                      <td>${author.email}</td>
+                      <td>${author.slug}</td>
+                      <td>${formatDate(author.created_at)}</td>
+                      <td>
+                        <div class="action-buttons">
+                          <button class="btn btn-secondary btn-small" onclick="window.editAuthor('${author.id}')">Edit</button>
+                          <button class="btn btn-danger btn-small" onclick="window.deleteAuthor('${author.id}', '${author.name.replace(/'/g, "\\'")}')">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('main-content').innerHTML = content;
+      }
+
+      async function loadCategories() {
+        const { data: categories, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name');
+
+        if (error) {
+          showError('Failed to load categories: ' + error.message);
+          return;
+        }
+
+        const content = `
+          <div class="page-header">
+            <h1 class="page-title">Categories</h1>
+            <button class="btn btn-primary" onclick="window.showCategoryForm()">New Category</button>
+          </div>
+          <div class="card">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${categories.map(category => `
+                    <tr>
+                      <td>${category.name}</td>
+                      <td>${category.slug}</td>
+                      <td>${category.description || ''}</td>
+                      <td>
+                        <div class="action-buttons">
+                          <button class="btn btn-secondary btn-small" onclick="window.editCategory('${category.id}')">Edit</button>
+                          <button class="btn btn-danger btn-small" onclick="window.deleteCategory('${category.id}', '${category.name.replace(/'/g, "\\'")}')">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('main-content').innerHTML = content;
+      }
+
+      async function loadTags() {
+        const { data: tags, error } = await supabase
+          .from('tags')
+          .select('*')
+          .order('name');
+
+        if (error) {
+          showError('Failed to load tags: ' + error.message);
+          return;
+        }
+
+        const content = `
+          <div class="page-header">
+            <h1 class="page-title">Tags</h1>
+            <button class="btn btn-primary" onclick="window.showTagForm()">New Tag</button>
+          </div>
+          <div class="card">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tags.map(tag => `
+                    <tr>
+                      <td>${tag.name}</td>
+                      <td>${tag.slug}</td>
+                      <td>${formatDate(tag.created_at)}</td>
+                      <td>
+                        <div class="action-buttons">
+                          <button class="btn btn-secondary btn-small" onclick="window.editTag('${tag.id}')">Edit</button>
+                          <button class="btn btn-danger btn-small" onclick="window.deleteTag('${tag.id}', '${tag.name.replace(/'/g, "\\'")}')">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('main-content').innerHTML = content;
+      }
+
+      function showError(message) {
+        const mainContent = document.getElementById('main-content');
+        mainContent.innerHTML = `<div class="error">${message}</div>` + mainContent.innerHTML;
+      }
+
+      function showSuccess(message) {
+        const mainContent = document.getElementById('main-content');
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success';
+        successDiv.textContent = message;
+        mainContent.insertBefore(successDiv, mainContent.firstChild);
+        setTimeout(() => successDiv.remove(), 3000);
+      }
+
+      async function showPostForm(postId = null) {
+        editingId = postId;
+        let post = null;
+
+        const { data: authors } = await supabase.from('authors').select('*').order('name');
+        const { data: categories } = await supabase.from('categories').select('*').order('name');
+        const { data: allTags } = await supabase.from('tags').select('*').order('name');
+
+        if (postId) {
+          const { data, error } = await supabase
+            .from('posts')
+            .select(`
+              *,
+              post_tags(tag_id)
+            `)
+            .eq('id', postId)
+            .single();
+
+          if (error) {
+            showError('Failed to load post: ' + error.message);
+            return;
+          }
+          post = data;
+        }
+
+        const postTags = post?.post_tags?.map(pt => pt.tag_id) || [];
+
+        const content = `
+          <div class="page-header">
+            <h1 class="page-title">${postId ? 'Edit Post' : 'New Post'}</h1>
+            <button class="btn btn-secondary" onclick="window.loadPage('posts')">Back to Posts</button>
+          </div>
+          <form id="post-form" class="card">
+            <div class="form-group">
+              <label class="form-label">Title *</label>
+              <input type="text" id="post-title" class="form-input" value="${post?.title || ''}" required onblur="window.updateSlug()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Slug *</label>
+              <input type="text" id="post-slug" class="form-input" value="${post?.slug || ''}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Content (Markdown) *</label>
+              <textarea id="post-content" class="form-textarea" required>${post?.content || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Excerpt</label>
+              <textarea id="post-excerpt" class="form-textarea" style="min-height: 100px;">${post?.excerpt || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Hero Image URL</label>
+              <input type="url" id="post-hero-image" class="form-input" value="${post?.hero_image || ''}">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Author</label>
+              <select id="post-author" class="form-select">
+                <option value="">No author</option>
+                ${authors?.map(author => `
+                  <option value="${author.id}" ${post?.author_id === author.id ? 'selected' : ''}>
+                    ${author.name}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select id="post-category" class="form-select">
+                <option value="">Uncategorized</option>
+                ${categories?.map(category => `
+                  <option value="${category.id}" ${post?.category_id === category.id ? 'selected' : ''}>
+                    ${category.name}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Tags</label>
+              ${allTags?.map(tag => `
+                <div class="checkbox-group">
+                  <input type="checkbox" id="tag-${tag.id}" value="${tag.id}" ${postTags.includes(tag.id) ? 'checked' : ''}>
+                  <label for="tag-${tag.id}">${tag.name}</label>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Meta Title</label>
+              <input type="text" id="post-meta-title" class="form-input" value="${post?.meta_title || ''}">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Meta Description</label>
+              <textarea id="post-meta-description" class="form-textarea" style="min-height: 80px;">${post?.meta_description || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="post-published" ${post?.published ? 'checked' : ''}>
+                <label for="post-published">Published</label>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save Post</button>
+              <button type="button" class="btn btn-secondary" onclick="window.loadPage('posts')">Cancel</button>
+            </div>
+          </form>
+        `;
+
+        document.getElementById('main-content').innerHTML = content;
+
+        document.getElementById('post-form').addEventListener('submit', savePost);
+      }
+
+      window.updateSlug = function() {
+        const title = document.getElementById('post-title').value;
+        const slugInput = document.getElementById('post-slug');
+        if (!slugInput.value) {
+          slugInput.value = slugify(title);
+        }
+      };
+
+      async function savePost(e) {
+        e.preventDefault();
+
+        const title = document.getElementById('post-title').value;
+        const slug = document.getElementById('post-slug').value;
+        const content = document.getElementById('post-content').value;
+        const excerpt = document.getElementById('post-excerpt').value;
+        const hero_image = document.getElementById('post-hero-image').value;
+        const author_id = document.getElementById('post-author').value || null;
+        const category_id = document.getElementById('post-category').value || null;
+        const meta_title = document.getElementById('post-meta-title').value;
+        const meta_description = document.getElementById('post-meta-description').value;
+        const published = document.getElementById('post-published').checked;
+
+        const selectedTags = Array.from(document.querySelectorAll('input[type="checkbox"][id^="tag-"]:checked'))
+          .map(cb => cb.value);
+
+        const postData = {
+          title,
+          slug,
+          content,
+          excerpt: excerpt || null,
+          hero_image: hero_image || null,
+          author_id,
+          category_id,
+          meta_title: meta_title || null,
+          meta_description: meta_description || null,
+          published,
+          published_at: published ? (editingId ? undefined : new Date().toISOString()) : null,
+        };
+
+        let result;
+        if (editingId) {
+          result = await supabase
+            .from('posts')
+            .update(postData)
+            .eq('id', editingId);
+        } else {
+          result = await supabase
+            .from('posts')
+            .insert([postData])
+            .select()
+            .single();
+        }
+
+        if (result.error) {
+          showError('Failed to save post: ' + result.error.message);
+          return;
+        }
+
+        const postId = editingId || result.data.id;
+
+        await supabase
+          .from('post_tags')
+          .delete()
+          .eq('post_id', postId);
+
+        if (selectedTags.length > 0) {
+          await supabase
+            .from('post_tags')
+            .insert(selectedTags.map(tag_id => ({ post_id: postId, tag_id })));
+        }
+
+        showSuccess('Post saved successfully!');
+        setTimeout(() => loadPosts(), 1000);
+      }
+
+      async function deletePost(id, title) {
+        if (!confirm(`Are you sure you want to delete "${title}"?`)) {
+          return;
+        }
+
+        const { error } = await supabase
+          .from('posts')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          showError('Failed to delete post: ' + error.message);
+          return;
+        }
+
+        showSuccess('Post deleted successfully!');
+        loadPosts();
+      }
+
+      async function showAuthorForm(authorId = null) {
+        editingId = authorId;
+        let author = null;
+
+        if (authorId) {
+          const { data, error } = await supabase
+            .from('authors')
+            .select('*')
+            .eq('id', authorId)
+            .single();
+
+          if (error) {
+            showError('Failed to load author: ' + error.message);
+            return;
+          }
+          author = data;
+        }
+
+        const content = `
+          <div class="page-header">
+            <h1 class="page-title">${authorId ? 'Edit Author' : 'New Author'}</h1>
+            <button class="btn btn-secondary" onclick="window.loadPage('authors')">Back to Authors</button>
+          </div>
+          <form id="author-form" class="card">
+            <div class="form-group">
+              <label class="form-label">Name *</label>
+              <input type="text" id="author-name" class="form-input" value="${author?.name || ''}" required onblur="window.updateAuthorSlug()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Slug *</label>
+              <input type="text" id="author-slug" class="form-input" value="${author?.slug || ''}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email *</label>
+              <input type="email" id="author-email" class="form-input" value="${author?.email || ''}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Bio</label>
+              <textarea id="author-bio" class="form-textarea" style="min-height: 120px;">${author?.bio || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Avatar URL</label>
+              <input type="url" id="author-avatar" class="form-input" value="${author?.avatar_url || ''}">
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save Author</button>
+              <button type="button" class="btn btn-secondary" onclick="window.loadPage('authors')">Cancel</button>
+            </div>
+          </form>
+        `;
+
+        document.getElementById('main-content').innerHTML = content;
+        document.getElementById('author-form').addEventListener('submit', saveAuthor);
+      }
+
+      window.updateAuthorSlug = function() {
+        const name = document.getElementById('author-name').value;
+        const slugInput = document.getElementById('author-slug');
+        if (!slugInput.value) {
+          slugInput.value = slugify(name);
+        }
+      };
+
+      async function saveAuthor(e) {
+        e.preventDefault();
+
+        const authorData = {
+          name: document.getElementById('author-name').value,
+          slug: document.getElementById('author-slug').value,
+          email: document.getElementById('author-email').value,
+          bio: document.getElementById('author-bio').value || null,
+          avatar_url: document.getElementById('author-avatar').value || null,
+        };
+
+        let result;
+        if (editingId) {
+          result = await supabase
+            .from('authors')
+            .update(authorData)
+            .eq('id', editingId);
+        } else {
+          result = await supabase
+            .from('authors')
+            .insert([authorData]);
+        }
+
+        if (result.error) {
+          showError('Failed to save author: ' + result.error.message);
+          return;
+        }
+
+        showSuccess('Author saved successfully!');
+        setTimeout(() => loadAuthors(), 1000);
+      }
+
+      async function deleteAuthor(id, name) {
+        if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+          return;
+        }
+
+        const { error } = await supabase
+          .from('authors')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          showError('Failed to delete author: ' + error.message);
+          return;
+        }
+
+        showSuccess('Author deleted successfully!');
+        loadAuthors();
+      }
+
+      async function showCategoryForm(categoryId = null) {
+        editingId = categoryId;
+        let category = null;
+
+        if (categoryId) {
+          const { data, error } = await supabase
+            .from('categories')
+            .select('*')
+            .eq('id', categoryId)
+            .single();
+
+          if (error) {
+            showError('Failed to load category: ' + error.message);
+            return;
+          }
+          category = data;
+        }
+
+        const content = `
+          <div class="page-header">
+            <h1 class="page-title">${categoryId ? 'Edit Category' : 'New Category'}</h1>
+            <button class="btn btn-secondary" onclick="window.loadPage('categories')">Back to Categories</button>
+          </div>
+          <form id="category-form" class="card">
+            <div class="form-group">
+              <label class="form-label">Name *</label>
+              <input type="text" id="category-name" class="form-input" value="${category?.name || ''}" required onblur="window.updateCategorySlug()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Slug *</label>
+              <input type="text" id="category-slug" class="form-input" value="${category?.slug || ''}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea id="category-description" class="form-textarea" style="min-height: 100px;">${category?.description || ''}</textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save Category</button>
+              <button type="button" class="btn btn-secondary" onclick="window.loadPage('categories')">Cancel</button>
+            </div>
+          </form>
+        `;
+
+        document.getElementById('main-content').innerHTML = content;
+        document.getElementById('category-form').addEventListener('submit', saveCategory);
+      }
+
+      window.updateCategorySlug = function() {
+        const name = document.getElementById('category-name').value;
+        const slugInput = document.getElementById('category-slug').value;
+        if (!slugInput.value) {
+          document.getElementById('category-slug').value = slugify(name);
+        }
+      };
+
+      async function saveCategory(e) {
+        e.preventDefault();
+
+        const categoryData = {
+          name: document.getElementById('category-name').value,
+          slug: document.getElementById('category-slug').value,
+          description: document.getElementById('category-description').value || null,
+        };
+
+        let result;
+        if (editingId) {
+          result = await supabase
+            .from('categories')
+            .update(categoryData)
+            .eq('id', editingId);
+        } else {
+          result = await supabase
+            .from('categories')
+            .insert([categoryData]);
+        }
+
+        if (result.error) {
+          showError('Failed to save category: ' + result.error.message);
+          return;
+        }
+
+        showSuccess('Category saved successfully!');
+        setTimeout(() => loadCategories(), 1000);
+      }
+
+      async function deleteCategory(id, name) {
+        if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+          return;
+        }
+
+        const { error } = await supabase
+          .from('categories')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          showError('Failed to delete category: ' + error.message);
+          return;
+        }
+
+        showSuccess('Category deleted successfully!');
+        loadCategories();
+      }
+
+      async function showTagForm(tagId = null) {
+        editingId = tagId;
+        let tag = null;
+
+        if (tagId) {
+          const { data, error } = await supabase
+            .from('tags')
+            .select('*')
+            .eq('id', tagId)
+            .single();
+
+          if (error) {
+            showError('Failed to load tag: ' + error.message);
+            return;
+          }
+          tag = data;
+        }
+
+        const content = `
+          <div class="page-header">
+            <h1 class="page-title">${tagId ? 'Edit Tag' : 'New Tag'}</h1>
+            <button class="btn btn-secondary" onclick="window.loadPage('tags')">Back to Tags</button>
+          </div>
+          <form id="tag-form" class="card">
+            <div class="form-group">
+              <label class="form-label">Name *</label>
+              <input type="text" id="tag-name" class="form-input" value="${tag?.name || ''}" required onblur="window.updateTagSlug()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Slug *</label>
+              <input type="text" id="tag-slug" class="form-input" value="${tag?.slug || ''}" required>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save Tag</button>
+              <button type="button" class="btn btn-secondary" onclick="window.loadPage('tags')">Cancel</button>
+            </div>
+          </form>
+        `;
+
+        document.getElementById('main-content').innerHTML = content;
+        document.getElementById('tag-form').addEventListener('submit', saveTag);
+      }
+
+      window.updateTagSlug = function() {
+        const name = document.getElementById('tag-name').value;
+        const slugInput = document.getElementById('tag-slug');
+        if (!slugInput.value) {
+          slugInput.value = slugify(name);
+        }
+      };
+
+      async function saveTag(e) {
+        e.preventDefault();
+
+        const tagData = {
+          name: document.getElementById('tag-name').value,
+          slug: document.getElementById('tag-slug').value,
+        };
+
+        let result;
+        if (editingId) {
+          result = await supabase
+            .from('tags')
+            .update(tagData)
+            .eq('id', editingId);
+        } else {
+          result = await supabase
+            .from('tags')
+            .insert([tagData]);
+        }
+
+        if (result.error) {
+          showError('Failed to save tag: ' + result.error.message);
+          return;
+        }
+
+        showSuccess('Tag saved successfully!');
+        setTimeout(() => loadTags(), 1000);
+      }
+
+      async function deleteTag(id, name) {
+        if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+          return;
+        }
+
+        const { error } = await supabase
+          .from('tags')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          showError('Failed to delete tag: ' + error.message);
+          return;
+        }
+
+        showSuccess('Tag deleted successfully!');
+        loadTags();
+      }
+
+      function loadPage(page) {
+        currentView = page;
+        document.querySelectorAll('.nav-item').forEach(item => {
+          item.classList.remove('active');
+          if (item.dataset.page === page) {
+            item.classList.add('active');
+          }
+        });
+
+        switch (page) {
+          case 'posts':
+            loadPosts();
+            break;
+          case 'authors':
+            loadAuthors();
+            break;
+          case 'categories':
+            loadCategories();
+            break;
+          case 'tags':
+            loadTags();
+            break;
+        }
+      }
+
+      window.loadPage = loadPage;
+      window.showPostForm = showPostForm;
+      window.editPost = showPostForm;
+      window.deletePost = deletePost;
+      window.showAuthorForm = showAuthorForm;
+      window.editAuthor = showAuthorForm;
+      window.deleteAuthor = deleteAuthor;
+      window.showCategoryForm = showCategoryForm;
+      window.editCategory = showCategoryForm;
+      window.deleteCategory = deleteCategory;
+      window.showTagForm = showTagForm;
+      window.editTag = showTagForm;
+      window.deleteTag = deleteTag;
+
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          loadPage(item.dataset.page);
+        });
+      });
+
+      loadPosts();
+    </script>
+  </body>
+</html>
