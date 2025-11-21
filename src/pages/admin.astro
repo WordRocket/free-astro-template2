@@ -1,6 +1,9 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ---
 
 <!doctype html>
@@ -282,8 +285,10 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
       </main>
     </div>
 
-    <script>
-      import { supabase } from '../lib/supabase.ts';
+    <script define:vars={{ SUPABASE_URL, SUPABASE_ANON_KEY }}>
+      import { createClient } from '@supabase/supabase-js';
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       let currentView = 'posts';
       let editingId = null;
