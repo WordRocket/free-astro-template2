@@ -390,53 +390,64 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
             return;
           }
 
-          const content = `
-            <div class="page-header">
-              <h1 class="page-title">Posts</h1>
-              <button class="btn btn-primary" onclick="window.showPostForm()">New Post</button>
-            </div>
-            ${posts && posts.length > 0 ? `
-              <div class="card">
-                <div class="table-container">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Title</th>
-                        <th>Author</th>
-                        <th>Category</th>
-                        <th>Status</th>
-                        <th>Published</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${posts.map(post => `
-                        <tr>
-                          <td>${post.title}</td>
-                          <td>${post.author?.name || 'No author'}</td>
-                          <td>${post.category?.name || 'Uncategorized'}</td>
-                          <td>
-                            <span class="badge ${post.published ? 'badge-success' : 'badge-warning'}">
-                              ${post.published ? 'Published' : 'Draft'}
-                            </span>
-                          </td>
-                          <td>${formatDate(post.published_at)}</td>
-                          <td>
-                            <div class="action-buttons">
-                              <button class="btn btn-secondary btn-small" onclick="window.editPost('${post.id}')">Edit</button>
-                              <button class="btn btn-danger btn-small" onclick="window.deletePost('${post.id}', '${post.title.replace(/'/g, "\\'")}')">Delete</button>
-                            </div>
-                          </td>
-                        </tr>
-                      `).join('')}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ` : '<div class="empty-state">No posts yet. Click "New Post" to create your first post.</div>'}
-          `;
+          const contentDiv = document.getElementById('main-content');
+          contentDiv.innerHTML = '';
 
-          document.getElementById('main-content').innerHTML = content;
+          const header = document.createElement('div');
+          header.className = 'page-header';
+          header.innerHTML = `
+            <h1 class="page-title">Posts</h1>
+            <button class="btn btn-primary" onclick="window.showPostForm()">New Post</button>
+          `;
+          contentDiv.appendChild(header);
+
+          if (posts && posts.length > 0) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Author</th>
+                      <th>Category</th>
+                      <th>Status</th>
+                      <th>Published</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${posts.map(post => `
+                      <tr>
+                        <td>${post.title}</td>
+                        <td>${post.author?.name || 'No author'}</td>
+                        <td>${post.category?.name || 'Uncategorized'}</td>
+                        <td>
+                          <span class="badge ${post.published ? 'badge-success' : 'badge-warning'}">
+                            ${post.published ? 'Published' : 'Draft'}
+                          </span>
+                        </td>
+                        <td>${formatDate(post.published_at)}</td>
+                        <td>
+                          <div class="action-buttons">
+                            <button class="btn btn-secondary btn-small" onclick="window.editPost('${post.id}')">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="window.deletePost('${post.id}', '${post.title.replace(/'/g, "\\'")}')">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `;
+            contentDiv.appendChild(card);
+          } else {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.textContent = 'No posts yet. Click "New Post" to create your first post.';
+            contentDiv.appendChild(emptyState);
+          }
         } catch (err) {
           showError('Unexpected error: ' + err.message);
         }
