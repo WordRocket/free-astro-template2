@@ -375,7 +375,31 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
       }
 
       async function loadPosts() {
+        const contentDiv = document.getElementById('main-content');
+
         try {
+          console.log('Starting to load posts...');
+
+          const header = document.createElement('div');
+          header.className = 'page-header';
+
+          const title = document.createElement('h1');
+          title.className = 'page-title';
+          title.textContent = 'Posts';
+
+          const button = document.createElement('button');
+          button.className = 'btn btn-primary';
+          button.textContent = 'New Post';
+          button.onclick = () => window.showPostForm();
+
+          header.appendChild(title);
+          header.appendChild(button);
+
+          contentDiv.innerHTML = '';
+          contentDiv.appendChild(header);
+
+          console.log('Header and button added, now fetching posts...');
+
           const { data: posts, error } = await supabase
             .from('posts')
             .select(`
@@ -385,21 +409,12 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
             `)
             .order('created_at', { ascending: false });
 
+          console.log('Posts fetch result:', { posts, error });
+
           if (error) {
             showError('Failed to load posts: ' + error.message);
             return;
           }
-
-          const contentDiv = document.getElementById('main-content');
-          contentDiv.innerHTML = '';
-
-          const header = document.createElement('div');
-          header.className = 'page-header';
-          header.innerHTML = `
-            <h1 class="page-title">Posts</h1>
-            <button class="btn btn-primary" onclick="window.showPostForm()">New Post</button>
-          `;
-          contentDiv.appendChild(header);
 
           if (posts && posts.length > 0) {
             const card = document.createElement('div');
@@ -449,7 +464,9 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
             contentDiv.appendChild(emptyState);
           }
         } catch (err) {
+          console.error('Error in loadPosts:', err);
           showError('Unexpected error: ' + err.message);
+          contentDiv.innerHTML = '<div class="empty-state">Error loading posts. Check console for details.</div>';
         }
       }
 
