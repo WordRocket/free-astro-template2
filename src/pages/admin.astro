@@ -631,8 +631,9 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
                 <div class="form-row">
                   <div class="form-group">
-                    <label for="content">Content *</label>
+                    <label for="content">Content * (Markdown)</label>
                     <textarea id="content" name="content" rows="15" required>${post?.content || ''}</textarea>
+                    <small>Supports Markdown: **bold**, *italic*, # Headings, [links](url), ![images](url), lists, tables, code blocks, etc.</small>
                   </div>
                 </div>
 

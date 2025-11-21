@@ -2,6 +2,7 @@
 import BlogPost from '../../layouts/BlogPost.astro';
 import { calculateReadingTime } from '../../lib/reading';
 import { supabase } from '../../lib/supabase';
+import { marked } from 'marked';
 
 export async function getStaticPaths() {
 	const { data: posts } = await supabase
@@ -36,6 +37,13 @@ const next = index > 0 ? { id: sorted[index - 1].slug, title: sorted[index - 1].
 const readingTimeMin = calculateReadingTime(post.content || '');
 const tags = post.post_tags?.map((pt: any) => pt.tag.name) || [];
 
+marked.setOptions({
+	breaks: true,
+	gfm: true,
+});
+
+const htmlContent = marked.parse(post.content || '');
+
 const blogPostData = {
 	title: post.title,
 	description: post.excerpt,
@@ -49,5 +57,5 @@ const blogPostData = {
 ---
 
 <BlogPost {...blogPostData} prevPost={prev} nextPost={next} readingTimeMin={readingTimeMin}>
-	<div set:html={post.content} />
+	<div class="prose prose-lg max-w-none dark:prose-invert" set:html={htmlContent} />
 </BlogPost>
