@@ -327,26 +327,164 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
       </main>
     </div>
 
-    <script type="module">
-      console.log('Admin script loading...');
+    <script>
+      import { createClient } from '@supabase/supabase-js';
 
-      try {
-        const { initAdmin } = await import('../lib/admin-client.ts');
-        console.log('Module imported successfully');
-        initAdmin();
-      } catch (error) {
-        console.error('Failed to load admin module:', error);
-        const mainContent = document.getElementById('main-content');
-        if (mainContent) {
-          mainContent.innerHTML = `
-            <div style="padding: 40px; text-align: center;">
-              <h2 style="color: #dc3545; margin-bottom: 20px;">Error Loading Admin Panel</h2>
-              <p style="color: #6c757d; margin-bottom: 10px;">${error.message}</p>
-              <pre style="background: #f8f9fa; padding: 20px; border-radius: 6px; text-align: left; overflow: auto;">${error.stack}</pre>
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        document.getElementById('main-content').innerHTML = '<div class="empty-state">Configuration Error: Missing Supabase credentials</div>';
+        throw new Error('Missing Supabase environment variables');
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+      function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-error';
+        errorDiv.textContent = message;
+        document.body.appendChild(errorDiv);
+        setTimeout(() => errorDiv.remove(), 5000);
+      }
+
+      function showSuccess(message) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success';
+        successDiv.textContent = message;
+        document.body.appendChild(successDiv);
+        setTimeout(() => successDiv.remove(), 3000);
+      }
+
+      function formatDate(dateString) {
+        if (!dateString) return 'Never';
+        return new Date(dateString).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+
+      async function loadPosts() {
+        try {
+          const { data: posts, error } = await supabase
+            .from('posts')
+            .select(`
+              *,
+              author:authors(name),
+              category:categories(name)
+            `)
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            showError('Failed to load posts: ' + error.message);
+            return;
+          }
+
+          const content = `
+            <div class="page-header">
+              <h1 class="page-title">Posts</h1>
+              <button class="btn btn-primary" onclick="window.showPostForm()">New Post</button>
             </div>
+            ${posts && posts.length > 0 ? `
+              <div class="card">
+                <div class="table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Published</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${posts.map(post => `
+                        <tr>
+                          <td>${post.title}</td>
+                          <td>${post.author?.name || 'No author'}</td>
+                          <td>${post.category?.name || 'Uncategorized'}</td>
+                          <td>
+                            <span class="badge ${post.published ? 'badge-success' : 'badge-warning'}">
+                              ${post.published ? 'Published' : 'Draft'}
+                            </span>
+                          </td>
+                          <td>${formatDate(post.published_at)}</td>
+                          <td>
+                            <div class="action-buttons">
+                              <button class="btn btn-secondary btn-small" onclick="window.editPost('${post.id}')">Edit</button>
+                              <button class="btn btn-danger btn-small" onclick="window.deletePost('${post.id}', '${post.title.replace(/'/g, "\\'")}')">Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ` : '<div class="empty-state">No posts yet. Click "New Post" to create your first post.</div>'}
           `;
+
+          document.getElementById('main-content').innerHTML = content;
+        } catch (err) {
+          showError('Unexpected error: ' + err.message);
         }
       }
+
+      function loadOtherSection(sectionName) {
+        document.getElementById('main-content').innerHTML = `
+          <div class="page-header">
+            <h1 class="page-title">${sectionName.charAt(0).toUpperCase() + sectionName.slice(1)}</h1>
+          </div>
+          <div class="card">
+            <p>Coming soon...</p>
+          </div>
+        `;
+      }
+
+      window.showPostForm = () => {
+        document.getElementById('main-content').innerHTML = '<div class="card"><h2>Create Post Form</h2><p>Form coming soon...</p></div>';
+      };
+
+      window.editPost = (id) => {
+        console.log('Edit post:', id);
+      };
+
+      window.deletePost = async (id, title) => {
+        if (!confirm(`Are you sure you want to delete "${title}"?`)) {
+          return;
+        }
+        const { error } = await supabase.from('posts').delete().eq('id', id);
+        if (error) {
+          showError('Failed to delete post: ' + error.message);
+        } else {
+          showSuccess('Post deleted successfully!');
+          loadPosts();
+        }
+      };
+
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const page = item.dataset.page;
+          document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+          item.classList.add('active');
+
+          switch (page) {
+            case 'posts':
+              loadPosts();
+              break;
+            case 'authors':
+            case 'categories':
+            case 'tags':
+              loadOtherSection(page);
+              break;
+          }
+        });
+      });
+
+      loadPosts();
     </script>
   </body>
 </html>
