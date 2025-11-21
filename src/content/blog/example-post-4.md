@@ -2,7 +2,7 @@
 title: 'Example Post Four'
 description: 'Showcase image layout and card behavior.'
 pubDate: 'Aug 12 2025'
-heroImage: ''
+heroImage: '../../assets/images/example-blog-hero4.jpg'
 category: 'Engineering'
 tags: ['template']
 ---

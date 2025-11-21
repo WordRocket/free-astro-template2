@@ -39,14 +39,4 @@ export function calculateReadingTimeFromMarkdown(markdown: string, wordsPerMinut
   return Math.max(1, Math.ceil(words / wordsPerMinute));
 }
 
-export function calculateReadingTime(content: string, wordsPerMinute = 200): number {
-  if (!content) return 1;
-  const text = content
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  const words = text ? text.split(' ').length : 0;
-  return Math.max(1, Math.ceil(words / wordsPerMinute));
-}
-
 

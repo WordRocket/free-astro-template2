@@ -1,31 +1,26 @@
 ---
+import { getCollection, render } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/sections/Footer.astro';
 import Header from '../../components/sections/Header.astro';
 import BlogHero from '../../components/sections/BlogHero.astro';
+import BlogAllArticles from '../../components/sections/BlogAllArticles.astro';
 import BlogPagination from '../../components/ui/nav/BlogPagination.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
-import PostCard from '../../components/ui/card/PostCard.astro';
-import { supabase } from '../../lib/supabase';
-import { calculateReadingTime } from '../../lib/reading';
+import FeaturedPost from '../../components/ui/card/FeaturedPost.astro';
+import { calculateReadingTimeFromHtml } from '../../lib/reading';
 
 const PAGE_SIZE = 6;
-
-const { data: postsData, error } = await supabase
-  .from('posts')
-  .select(`
-    *,
-    author:authors(name, slug),
-    category:categories(name, slug),
-    post_tags(tag:tags(name, slug))
-  `)
-  .eq('published', true)
-  .order('published_at', { ascending: false });
-
-const posts = postsData || [];
+const posts = (await getCollection('blog')).sort((a,b)=>+b.data.pubDate-+a.data.pubDate);
 const [featured, ...rest] = posts;
 const firstPagePosts = rest.slice(0, PAGE_SIZE);
 const totalPages = Math.max(1, Math.ceil(rest.length / PAGE_SIZE));
+let featuredReading = 0;
+if (featured) {
+  const { Content } = await render(featured);
+  const html = await Astro.slots.render('default');
+  featuredReading = calculateReadingTimeFromHtml(html ?? '');
+}
 ---
 
 <!doctype html>
@@ -42,34 +37,11 @@ const totalPages = Math.max(1, Math.ceil(rest.length / PAGE_SIZE));
         <main class="use-utility-layout mx-auto max-w-5xl px-3 py-5 space-y-7">
             {featured && (
               <section class="card-surface p-4 md:p-5 hover-lift sw-featured-card">
-                <article>
-                  <a href={`/blog/${featured.slug}`} class="block">
-                    {featured.hero_image && (
-                      <img src={featured.hero_image} alt={featured.title} class="w-full h-64 object-cover rounded-lg mb-4" />
-                    )}
-                    <h2 class="text-3xl font-bold mb-2">{featured.title}</h2>
-                    <p class="text-gray-400 mb-4">{featured.excerpt}</p>
-                    <div class="flex items-center gap-4 text-sm text-gray-500">
-                      <span>{featured.author?.name}</span>
-                      <span>•</span>
-                      <span>{new Date(featured.published_at).toLocaleDateString()}</span>
-                      <span>•</span>
-                      <span>{calculateReadingTime(featured.content)} min read</span>
-                    </div>
-                  </a>
-                </article>
+                <FeaturedPost post={featured} readingTimeMin={featuredReading} />
               </section>
             )}
 
-            <section class="space-y-5">
-              <h2 class="text-2xl font-bold">All Articles</h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {firstPagePosts.map((post) => (
-                  <PostCard post={post} />
-                ))}
-              </div>
-            </section>
-
+            <BlogAllArticles posts={firstPagePosts} />
             <BlogPagination currentPage={1} totalPages={totalPages} />
         </main>
         <Footer />
