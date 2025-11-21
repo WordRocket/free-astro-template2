@@ -1,0 +1,857 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`Admin Panel - ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: #f8f9fa;
+        color: #212529;
+      }
+
+      .admin-container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        width: 250px;
+        background: #2c3e50;
+        color: white;
+        padding: 20px;
+      }
+
+      .sidebar-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+
+      .nav-item {
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .nav-item:hover {
+        background: rgba(255,255,255,0.1);
+      }
+
+      .nav-item.active {
+        background: #3498db;
+      }
+
+      .main-content {
+        flex: 1;
+        padding: 30px;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+
+      .page-title {
+        font-size: 32px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: #3498db;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #2980b9;
+      }
+
+      .btn-danger {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #c0392b;
+      }
+
+      .btn-secondary {
+        background: #95a5a6;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #7f8c8d;
+      }
+
+      .card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+      }
+
+      .table-container {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+      }
+
+      tr:hover {
+        background: #f8f9fa;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #495057;
+      }
+
+      .form-input, .form-textarea, .form-select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+      }
+
+      .form-textarea {
+        min-height: 200px;
+        resize: vertical;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      }
+
+      .form-input:focus, .form-textarea:focus, .form-select:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .badge-success {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .badge-warning {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 8px;
+      }
+
+      .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+      }
+
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+
+      .success {
+        background: #d4edda;
+        color: #155724;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .post-form label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: #495057;
+        font-size: 14px;
+      }
+
+      .post-form input[type="text"],
+      .post-form input[type="url"],
+      .post-form textarea,
+      .post-form select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: border-color 0.2s;
+      }
+
+      .post-form input:focus,
+      .post-form textarea:focus,
+      .post-form select:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      }
+
+      .post-form textarea {
+        resize: vertical;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      }
+
+      .post-form small {
+        display: block;
+        margin-top: 4px;
+        color: #6c757d;
+        font-size: 12px;
+      }
+
+      .form-row {
+        margin-bottom: 20px;
+      }
+
+      .form-row:last-of-type {
+        margin-bottom: 0;
+      }
+
+      .form-group.half {
+        display: inline-block;
+        width: calc(50% - 10px);
+      }
+
+      .form-group.half:first-child {
+        margin-right: 20px;
+      }
+
+      .tags-selection {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+      }
+
+      .tag-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .tag-checkbox input[type="checkbox"] {
+        width: auto;
+        cursor: pointer;
+      }
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .checkbox-label input[type="checkbox"] {
+        width: auto;
+        cursor: pointer;
+      }
+
+      .markdown-preview {
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 20px;
+        margin-top: 10px;
+        background: white;
+        min-height: 200px;
+      }
+
+      .split-view {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .checkbox-group input[type="checkbox"] {
+        width: auto;
+        cursor: pointer;
+      }
+
+      .alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+      }
+
+      .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-container">
+      <aside class="sidebar">
+        <div class="sidebar-title">CMS Admin</div>
+        <nav>
+          <div class="nav-item active" data-page="posts">Posts</div>
+          <div class="nav-item" data-page="authors">Authors</div>
+          <div class="nav-item" data-page="categories">Categories</div>
+          <div class="nav-item" data-page="tags">Tags</div>
+        </nav>
+      </aside>
+      <main class="main-content" id="main-content">
+        <div class="loading">Loading...</div>
+      </main>
+    </div>
+
+    <script>
+      import { createClient } from '@supabase/supabase-js';
+
+      const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      console.log('Env check:', {
+        hasPublicUrl: !!import.meta.env.PUBLIC_SUPABASE_URL,
+        hasViteUrl: !!import.meta.env.VITE_SUPABASE_URL,
+        hasPublicKey: !!import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+        hasViteKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+        finalUrl: supabaseUrl,
+        finalKey: supabaseAnonKey ? 'present' : 'missing'
+      });
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        document.getElementById('main-content').innerHTML = '<div class="empty-state">Configuration Error: Missing Supabase credentials</div>';
+        throw new Error('Missing Supabase environment variables');
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+      function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-error';
+        errorDiv.textContent = message;
+        document.body.appendChild(errorDiv);
+        setTimeout(() => errorDiv.remove(), 5000);
+      }
+
+      function showSuccess(message) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success';
+        successDiv.textContent = message;
+        document.body.appendChild(successDiv);
+        setTimeout(() => successDiv.remove(), 3000);
+      }
+
+      function formatDate(dateString) {
+        if (!dateString) return 'Never';
+        return new Date(dateString).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+
+      async function loadPosts() {
+        const contentDiv = document.getElementById('main-content');
+
+        try {
+          console.log('Starting to load posts...');
+
+          const header = document.createElement('div');
+          header.className = 'page-header';
+
+          const title = document.createElement('h1');
+          title.className = 'page-title';
+          title.textContent = 'Posts';
+
+          const button = document.createElement('button');
+          button.className = 'btn btn-primary';
+          button.textContent = 'New Post';
+          button.onclick = () => window.showPostForm();
+
+          header.appendChild(title);
+          header.appendChild(button);
+
+          contentDiv.innerHTML = '';
+          contentDiv.appendChild(header);
+
+          console.log('Header and button added, now fetching posts...');
+
+          const { data: posts, error } = await supabase
+            .from('posts')
+            .select(`
+              *,
+              author:authors(name),
+              category:categories(name)
+            `)
+            .order('created_at', { ascending: false });
+
+          console.log('Posts fetch result:', { posts, error });
+
+          if (error) {
+            showError('Failed to load posts: ' + error.message);
+            return;
+          }
+
+          if (posts && posts.length > 0) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Author</th>
+                      <th>Category</th>
+                      <th>Status</th>
+                      <th>Published</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${posts.map(post => `
+                      <tr>
+                        <td>${post.title}</td>
+                        <td>${post.author?.name || 'No author'}</td>
+                        <td>${post.category?.name || 'Uncategorized'}</td>
+                        <td>
+                          <span class="badge ${post.published ? 'badge-success' : 'badge-warning'}">
+                            ${post.published ? 'Published' : 'Draft'}
+                          </span>
+                        </td>
+                        <td>${formatDate(post.published_at)}</td>
+                        <td>
+                          <div class="action-buttons">
+                            <button class="btn btn-secondary btn-small" onclick="window.editPost('${post.id}')">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="window.deletePost('${post.id}', '${post.title.replace(/'/g, "\\'")}')">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `;
+            contentDiv.appendChild(card);
+          } else {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.textContent = 'No posts yet. Click "New Post" to create your first post.';
+            contentDiv.appendChild(emptyState);
+          }
+        } catch (err) {
+          console.error('Error in loadPosts:', err);
+          showError('Unexpected error: ' + err.message);
+          contentDiv.innerHTML = '<div class="empty-state">Error loading posts. Check console for details.</div>';
+        }
+      }
+
+      function loadOtherSection(sectionName) {
+        document.getElementById('main-content').innerHTML = `
+          <div class="page-header">
+            <h1 class="page-title">${sectionName.charAt(0).toUpperCase() + sectionName.slice(1)}</h1>
+          </div>
+          <div class="card">
+            <p>Coming soon...</p>
+          </div>
+        `;
+      }
+
+      window.showPostForm = async (postId = null) => {
+        try {
+          const [authorsRes, categoriesRes, tagsRes] = await Promise.all([
+            supabase.from('authors').select('id, name').order('name'),
+            supabase.from('categories').select('id, name').order('name'),
+            supabase.from('tags').select('id, name').order('name')
+          ]);
+
+          let post = null;
+          let selectedTags = [];
+
+          if (postId) {
+            const { data } = await supabase
+              .from('posts')
+              .select('*, post_tags(tag_id)')
+              .eq('id', postId)
+              .single();
+            post = data;
+            selectedTags = data?.post_tags?.map(pt => pt.tag_id) || [];
+          }
+
+          const isEdit = !!postId;
+          const formTitle = isEdit ? 'Edit Post' : 'Create New Post';
+
+          const contentDiv = document.getElementById('main-content');
+          contentDiv.innerHTML = `
+            <div class="page-header">
+              <h1 class="page-title">${formTitle}</h1>
+              <button class="btn btn-secondary" onclick="loadPosts()">Back to Posts</button>
+            </div>
+            <div class="card">
+              <form id="post-form" class="post-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="title">Title *</label>
+                    <input type="text" id="title" name="title" required value="${post?.title || ''}">
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="slug">Slug *</label>
+                    <input type="text" id="slug" name="slug" required value="${post?.slug || ''}">
+                    <small>URL-friendly version of the title</small>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="excerpt">Excerpt</label>
+                    <textarea id="excerpt" name="excerpt" rows="3">${post?.excerpt || ''}</textarea>
+                    <small>Brief summary shown in post listings</small>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="content">Content * (Markdown)</label>
+                    <textarea id="content" name="content" rows="15" required>${post?.content || ''}</textarea>
+                    <small>Supports Markdown: **bold**, *italic*, # Headings, [links](url), ![images](url), lists, tables, code blocks, etc.</small>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="hero_image">Hero Image URL</label>
+                    <input type="url" id="hero_image" name="hero_image" value="${post?.hero_image || ''}">
+                    <small>URL to the main image for this post</small>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group half">
+                    <label for="author_id">Author *</label>
+                    <select id="author_id" name="author_id" required>
+                      <option value="">Select Author</option>
+                      ${authorsRes.data?.map(author => `
+                        <option value="${author.id}" ${post?.author_id === author.id ? 'selected' : ''}>
+                          ${author.name}
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+
+                  <div class="form-group half">
+                    <label for="category_id">Category *</label>
+                    <select id="category_id" name="category_id" required>
+                      <option value="">Select Category</option>
+                      ${categoriesRes.data?.map(category => `
+                        <option value="${category.id}" ${post?.category_id === category.id ? 'selected' : ''}>
+                          ${category.name}
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Tags</label>
+                    <div class="tags-selection">
+                      ${tagsRes.data?.map(tag => `
+                        <label class="tag-checkbox">
+                          <input type="checkbox" name="tags" value="${tag.id}" ${selectedTags.includes(tag.id) ? 'checked' : ''}>
+                          <span>${tag.name}</span>
+                        </label>
+                      `).join('')}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group half">
+                    <label for="meta_title">Meta Title</label>
+                    <input type="text" id="meta_title" name="meta_title" value="${post?.meta_title || ''}">
+                    <small>SEO title (defaults to post title)</small>
+                  </div>
+
+                  <div class="form-group half">
+                    <label for="meta_description">Meta Description</label>
+                    <input type="text" id="meta_description" name="meta_description" value="${post?.meta_description || ''}">
+                    <small>SEO description</small>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="published" name="published" ${post?.published ? 'checked' : ''}>
+                      <span>Publish immediately</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" onclick="loadPosts()">Cancel</button>
+                  <button type="submit" class="btn btn-primary">
+                    ${isEdit ? 'Update Post' : 'Create Post'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          `;
+
+          document.getElementById('title').addEventListener('input', (e) => {
+            const slug = e.target.value
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-|-$/g, '');
+            document.getElementById('slug').value = slug;
+          });
+
+          document.getElementById('post-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await window.savePost(postId);
+          });
+
+        } catch (err) {
+          console.error('Error loading form:', err);
+          showError('Failed to load form: ' + err.message);
+        }
+      };
+
+      window.editPost = (id) => {
+        window.showPostForm(id);
+      };
+
+      window.savePost = async (postId = null) => {
+        try {
+          const form = document.getElementById('post-form');
+          const formData = new FormData(form);
+
+          const published = formData.get('published') === 'on';
+          const selectedTags = Array.from(form.querySelectorAll('input[name="tags"]:checked'))
+            .map(cb => cb.value);
+
+          const postData = {
+            title: formData.get('title'),
+            slug: formData.get('slug'),
+            content: formData.get('content'),
+            excerpt: formData.get('excerpt') || null,
+            hero_image: formData.get('hero_image') || null,
+            meta_title: formData.get('meta_title') || null,
+            meta_description: formData.get('meta_description') || null,
+            author_id: formData.get('author_id'),
+            category_id: formData.get('category_id'),
+            published: published,
+            published_at: published ? new Date().toISOString() : null,
+            updated_at: new Date().toISOString()
+          };
+
+          let result;
+          if (postId) {
+            result = await supabase
+              .from('posts')
+              .update(postData)
+              .eq('id', postId)
+              .select()
+              .single();
+          } else {
+            result = await supabase
+              .from('posts')
+              .insert([postData])
+              .select()
+              .single();
+          }
+
+          if (result.error) {
+            showError('Failed to save post: ' + result.error.message);
+            return;
+          }
+
+          const savedPostId = result.data.id;
+
+          if (postId) {
+            await supabase
+              .from('post_tags')
+              .delete()
+              .eq('post_id', postId);
+          }
+
+          if (selectedTags.length > 0) {
+            const tagInserts = selectedTags.map(tagId => ({
+              post_id: savedPostId,
+              tag_id: tagId
+            }));
+
+            const tagResult = await supabase
+              .from('post_tags')
+              .insert(tagInserts);
+
+            if (tagResult.error) {
+              console.error('Error saving tags:', tagResult.error);
+            }
+          }
+
+          showSuccess(postId ? 'Post updated successfully!' : 'Post created successfully!');
+          setTimeout(() => loadPosts(), 1000);
+
+        } catch (err) {
+          console.error('Error saving post:', err);
+          showError('Unexpected error: ' + err.message);
+        }
+      };
+
+      window.deletePost = async (id, title) => {
+        if (!confirm(`Are you sure you want to delete "${title}"?`)) {
+          return;
+        }
+        const { error } = await supabase.from('posts').delete().eq('id', id);
+        if (error) {
+          showError('Failed to delete post: ' + error.message);
+        } else {
+          showSuccess('Post deleted successfully!');
+          loadPosts();
+        }
+      };
+
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const page = item.dataset.page;
+          document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+          item.classList.add('active');
+
+          switch (page) {
+            case 'posts':
+              loadPosts();
+              break;
+            case 'authors':
+            case 'categories':
+            case 'tags':
+              loadOtherSection(page);
+              break;
+          }
+        });
+      });
+
+      loadPosts();
+    </script>
+  </body>
+</html>
